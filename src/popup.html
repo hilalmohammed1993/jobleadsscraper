@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Leads Scraper</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Job Leads Scraper</h1>
+            <p class="subtitle">Push profile data to Google Sheets</p>
+        </header>
+
+        <main>
+            <div class="input-group">
+                <label for="spreadsheetId">Spreadsheet ID</label>
+                <input type="text" id="spreadsheetId" placeholder="Enter Spreadsheet ID...">
+            </div>
+
+            <div class="input-group">
+                <label for="sheetName">Sheet Name (Tab)</label>
+                <input type="text" id="sheetName" placeholder="e.g. Sheet1" value="Sheet1">
+            </div>
+
+            <button id="pushBtn" class="primary-btn">
+                <span>Scrape & Push</span>
+                <div class="loader" id="loader"></div>
+            </button>
+
+            <div id="status" class="status-msg"></div>
+        </main>
+
+        <footer>
+            <button id="authBtn" class="secondary-btn">Check Authentication</button>
+        </footer>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
