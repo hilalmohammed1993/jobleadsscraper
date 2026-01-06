@@ -30,7 +30,7 @@
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>"
+        "https://www.linkedin.com/in/*"
       ],
       "js": [
         "src/content.js"
@@ -40,7 +40,8 @@
   "oauth2": {
     "client_id": "1097861615474-2hefv5pmkv811jn1cpqd57vqh884ff1g.apps.googleusercontent.com",
     "scopes": [
-      "https://www.googleapis.com/auth/spreadsheets"
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/gmail.send"
     ]
   },
   "icons": {

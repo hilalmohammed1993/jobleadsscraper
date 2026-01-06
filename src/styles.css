@@ -118,6 +118,50 @@ header h1 {
     color: white;
 }
 
+.button-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.email-btn {
+    background: linear-gradient(135deg, #a855f7 0%, #d946ef 100%);
+    margin-top: 0;
+}
+
+.template-section {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.template-section label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.template-section input, 
+.template-section textarea {
+    width: 100%;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    color: white;
+    font-size: 0.8rem;
+    margin-bottom: 8px;
+    font-family: inherit;
+}
+
+.template-section textarea {
+    height: 80px;
+    resize: none;
+}
+
 .status-msg {
     margin-top: 16px;
     font-size: 0.8rem;

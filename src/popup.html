@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Job Leads Scraper</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -24,10 +26,17 @@
                 <input type="text" id="sheetName" placeholder="e.g. Sheet1" value="Sheet1">
             </div>
 
-            <button id="pushBtn" class="primary-btn">
-                <span>Scrape & Push</span>
-                <div class="loader" id="loader"></div>
-            </button>
+            <div class="button-group">
+                <button id="pushBtn" class="primary-btn">
+                    <span>Scrape & Push</span>
+                    <div class="loader" id="loader"></div>
+                </button>
+                <button id="emailBtn" class="primary-btn email-btn">
+                    <span>Scrape & Email</span>
+                    <div class="loader" id="emailLoader"></div>
+                </button>
+            </div>
+
 
             <div id="status" class="status-msg"></div>
         </main>
@@ -38,4 +47,5 @@
     </div>
     <script src="popup.js"></script>
 </body>
+
 </html>
