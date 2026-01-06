@@ -5,6 +5,10 @@ credentials.json
 *.pem
 *.key
 
+# Job Leads Scraper specific sensitive files
+src/emailConfig.js
+EmailAutomation.gs
+
 # Extension Build & Temp
 dist/
 build/
