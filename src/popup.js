@@ -10,22 +10,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('loader');
     const emailLoader = document.getElementById('emailLoader');
 
+    const scheduleDateSelect = document.getElementById('scheduleDate');
+    const scheduleTimeSelect = document.getElementById('scheduleTime');
+
+    // Populate time dropdown
+    for (let i = 0; i < 24; i++) {
+        const hour = i.toString().padStart(2, '0') + ':00';
+        const option = document.createElement('option');
+        option.value = hour;
+        option.textContent = hour;
+        scheduleTimeSelect.appendChild(option);
+    }
+
     // Load saved settings
-    chrome.storage.local.get(['spreadsheetId', 'sheetName'], (data) => {
+    chrome.storage.local.get(['spreadsheetId', 'sheetName', 'scheduleDate', 'scheduleTime'], (data) => {
         if (data.spreadsheetId) spreadsheetIdInput.value = data.spreadsheetId;
         if (data.sheetName) sheetNameInput.value = data.sheetName;
+        if (data.scheduleDate) scheduleDateSelect.value = data.scheduleDate;
+        if (data.scheduleTime) scheduleTimeSelect.value = data.scheduleTime;
     });
 
-    // Save settings on input
+    // Save settings on input/change
     const saveSettings = () => {
         chrome.storage.local.set({
             spreadsheetId: spreadsheetIdInput.value.trim(),
-            sheetName: sheetNameInput.value.trim()
+            sheetName: sheetNameInput.value.trim(),
+            scheduleDate: scheduleDateSelect.value,
+            scheduleTime: scheduleTimeSelect.value
         });
     };
 
     [spreadsheetIdInput, sheetNameInput].forEach(el => {
         el.addEventListener('input', saveSettings);
+    });
+
+    [scheduleDateSelect, scheduleTimeSelect].forEach(el => {
+        el.addEventListener('change', saveSettings);
     });
 
     const showStatus = (msg, isError = false) => {
@@ -66,7 +86,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 spreadsheetId,
                 sheetName,
                 data: response.data,
-                sendEmail: sendEmail
+                sendEmail: sendEmail,
+                schedule: sendEmail ? {
+                    date: document.getElementById('scheduleDate').value,
+                    time: document.getElementById('scheduleTime').value
+                } : null
             }, (bgResponse) => {
                 activeBtn.classList.remove('loading');
                 activeBtn.disabled = false;
@@ -80,7 +104,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (bgResponse && bgResponse.success) {
                     let msg = 'Success! Data pushed to Google Sheets.';
                     if (sendEmail) {
-                        msg = bgResponse.emailSent ? 'Success! Data pushed & Email sent.' : 'Data pushed, but no email found.';
+                        if (bgResponse.status === 'mail sent') {
+                            msg = 'Success! Data pushed & Email sent.';
+                        } else if (bgResponse.status === 'scheduled') {
+                            msg = 'Success! Data pushed & Email scheduled.';
+                        } else if (bgResponse.status === 'no mail') {
+                            msg = 'Data pushed, but no email address found.';
+                        } else if (bgResponse.status === 'mail failed') {
+                            msg = 'Data pushed, but Gmail API failed.';
+                        }
                     }
                     showStatus(msg);
                 } else {

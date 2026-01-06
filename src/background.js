@@ -37,7 +37,7 @@ async function getAuthToken(interactive = true) {
 }
 
 async function processPushRequest(request) {
-    const { spreadsheetId, sheetName, data, sendEmail } = request;
+    const { spreadsheetId, sheetName, data, sendEmail, schedule } = request;
     const token = await getAuthToken(true);
 
     // 1. Attempt to find email
@@ -46,35 +46,49 @@ async function processPushRequest(request) {
         email = await findEmailFromMailmeteor(data.profileUrl);
     } catch (e) { console.error('Email finding failed:', e); }
 
-    // 2. Determine Status
+    // 2. Determine Status and Scheduling
     let status = 'scraped';
     let emailSent = false;
+    let scheduledTime = '';
 
     if (sendEmail) {
         if (email !== 'Not Found' && !email.includes('Timeout')) {
-            try {
-                // Use the fixed template from emailConfig.js
-                await shootEmail(token, email, data, EMAIL_CONFIG);
-                status = 'mail sent';
-                emailSent = true;
-            } catch (e) {
-                console.error('Email sending failed:', e);
-                status = 'mail failed';
+            const isNow = !schedule || schedule.time === 'now';
+
+            if (isNow) {
+                try {
+                    await shootEmail(token, email, data, EMAIL_CONFIG);
+                    status = 'mail sent';
+                    emailSent = true;
+                } catch (e) {
+                    console.error('Email sending failed:', e);
+                    status = 'mail failed';
+                }
+            } else {
+                status = 'scheduled';
+                // Calculate proper Date for Column J
+                const date = new Date();
+                if (schedule.date === 'tomorrow') date.setDate(date.getDate() + 1);
+                if (schedule.date === 'day_after') date.setDate(date.getDate() + 2);
+
+                const [hours, minutes] = schedule.time.split(':').map(Number);
+                date.setHours(hours, minutes, 0, 0);
+                scheduledTime = date.toLocaleString(); // Format as readable timestamp
             }
         } else {
-            status = 'no mail';
+            status = 'no email found';
         }
     }
 
-    // 3. Push to Sheets (9 columns: A to I)
-    const range = `${sheetName}!A:I`;
+    // 3. Push to Sheets (10 columns: A to J)
+    const range = `${sheetName}!A:J`;
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}:append?valueInputOption=USER_ENTERED`;
-    const entryDate = new Date().toLocaleDateString();
+    const entryTime = new Date().toLocaleString(); // Full date and time
 
     const values = [[
         data.firstName, data.lastName, data.fullName,
         data.currentCompany, data.role, data.profileUrl,
-        email, entryDate, status
+        email, entryTime, status, scheduledTime
     ]];
 
     const response = await fetch(url, {
@@ -88,7 +102,7 @@ async function processPushRequest(request) {
 
     if (!response.ok) throw new Error('Sheets API Error');
 
-    return { success: true, emailSent };
+    return { success: true, emailSent, status };
 }
 
 async function shootEmail(token, email, data, template) {

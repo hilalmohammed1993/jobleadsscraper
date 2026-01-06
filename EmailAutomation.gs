@@ -1,19 +1,20 @@
 /**
- * Job Leads Scraper - Bulk Email Automation
+ * Job Leads Scraper - Bulk Email & Scheduling Automation (v2)
  * 
  * Instructions:
  * 1. Open your Google Sheet.
  * 2. Go to Extensions > Apps Script.
  * 3. Delete any code there and paste this code.
- * 4. Update the CONFIG section below.
- * 5. Click the "Send Emails" button (or run the sendEmails function).
+ * 4. Update the CONFIG section.
+ * 5. Run 'setupTrigger' once from the script editor.
  */
 
 const CONFIG = {
   SHEET_NAME: 'Sheet1',
-  EMAIL_COLUMN_INDEX: 7, // Column G (1-indexed)
-  STATUS_COLUMN_INDEX: 9, // Column I (1-indexed)
-  DRIVE_FILE_ID: 'YOUR_GOOGLE_DRIVE_FILE_ID_HERE', // Optional: Get ID from the file's share link
+  EMAIL_COLUMN_INDEX: 7, // Column G
+  STATUS_COLUMN_INDEX: 9, // Column I
+  SCHEDULE_COLUMN_INDEX: 10, // Column J
+  DRIVE_FILE_ID: 'YOUR_GOOGLE_DRIVE_FILE_ID_HERE', 
   EMAIL_SUBJECT: 'Exploring Product Manager Opportunities',
   EMAIL_BODY: `Hi {{FirstName}},<br><br>
         I hope you're doing well. I'm reaching out to see if you're aware of any current or upcoming openings in the&nbsp;<strong>Product Management</strong>&nbsp;domain. I'm currently working as a Product Manager on&nbsp;<strong>AI-driven software platforms</strong>, with over 7 years of experience across product management, software development, data analytics, and consulting.<br><br>
@@ -29,41 +30,65 @@ const CONFIG = {
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('🚀 Scraper Tools')
-      .addItem('Bulk Send Emails', 'sendEmails')
+      .addItem('Bulk Send Emails (Manual)', 'sendEmails')
+      .addItem('Initialize Auto-Scheduler', 'setupTrigger')
       .addToUi();
 }
 
+function setupTrigger() {
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('checkScheduledEmails').timeBased().everyHours(1).create();
+  SpreadsheetApp.getUi().alert('Auto-Scheduler is now ACTIVE!');
+}
+
+function checkScheduledEmails() {
+  processEmails(new Date());
+}
+
 function sendEmails() {
+  processEmails(null);
+}
+
+function processEmails(currentTime) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME);
   const data = sheet.getDataRange().getValues();
   const file = CONFIG.DRIVE_FILE_ID !== 'YOUR_GOOGLE_DRIVE_FILE_ID_HERE' ? DriveApp.getFileById(CONFIG.DRIVE_FILE_ID) : null;
   
   let sentCount = 0;
   
-  // Skip header row
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     const email = row[CONFIG.EMAIL_COLUMN_INDEX - 1];
     const status = row[CONFIG.STATUS_COLUMN_INDEX - 1];
+    const scheduleVal = row[CONFIG.SCHEDULE_COLUMN_INDEX - 1]; // This is now a proper Date object in the spreadsheet
     const firstName = row[0];
     const company = row[3];
     
-    // Only send if email exists and status is not already "mail sent"
-    if (email && email.includes('@') && status !== 'mail sent') {
-      const subject = CONFIG.EMAIL_SUBJECT
-          .replace(/{{FirstName}}/g, firstName)
-          .replace(/{{Company}}/g, company);
-          
-      const body = CONFIG.EMAIL_BODY
-          .replace(/{{FirstName}}/g, firstName)
-          .replace(/{{Company}}/g, company);
-      
-      const options = {
-        htmlBody: body
-      };
-      if (file) {
-        options.attachments = [file.getAs(SpreadsheetApp.MimeType.PDF)]; // Adjust mime type as needed
+    // Skip if already sent
+    if (!email || !email.includes('@') || status === 'mail sent' || status === 'email sent through GAS') continue;
+
+    let shouldSend = false;
+    
+    if (currentTime === null) {
+      // Manual trigger: Send anything with status "scheduled" or "no email found" (if email exists now)
+      if (email && (status === 'scheduled' || status === 'no email found' || status === 'scraped')) {
+        shouldSend = true;
       }
+    } else if (status === 'scheduled' && scheduleVal) {
+      // Auto trigger: Check if it's time
+      const scheduledDate = new Date(scheduleVal);
+      if (!isNaN(scheduledDate.getTime()) && currentTime >= scheduledDate) {
+        shouldSend = true;
+      }
+    }
+
+    if (shouldSend) {
+      const subject = CONFIG.EMAIL_SUBJECT.replace(/{{FirstName}}/g, firstName).replace(/{{Company}}/g, company);
+      const body = CONFIG.EMAIL_BODY.replace(/{{FirstName}}/g, firstName).replace(/{{Company}}/g, company);
+      
+      const options = { htmlBody: body };
+      if (file) options.attachments = [file.getAs(SpreadsheetApp.MimeType.PDF)];
       
       try {
         GmailApp.sendEmail(email, subject, body, options);
@@ -74,6 +99,4 @@ function sendEmails() {
       }
     }
   }
-  
-  SpreadsheetApp.getUi().alert('Finished! Sent ' + sentCount + ' emails.');
 }

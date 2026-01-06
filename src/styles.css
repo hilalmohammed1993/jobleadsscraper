@@ -144,7 +144,7 @@ header h1 {
     text-transform: uppercase;
 }
 
-.template-section input, 
+.template-section input,
 .template-section textarea {
     width: 100%;
     padding: 8px 10px;
@@ -160,6 +160,41 @@ header h1 {
 .template-section textarea {
     height: 80px;
     resize: none;
+}
+
+.scheduling-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.scheduling-section label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.schedule-inputs {
+    display: flex;
+    gap: 8px;
+}
+
+.schedule-inputs select {
+    flex: 1;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    color: white;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.schedule-inputs select option {
+    background: #4338ca;
 }
 
 .status-msg {
@@ -189,7 +224,9 @@ header h1 {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 #pushBtn.loading .loader {
